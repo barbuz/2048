@@ -42,6 +42,17 @@ Grid.prototype.randomAvailableCell = function () {
   }
 };
 
+//Find an available random position near an occupied cell
+Grid.prototype.magneticAvailableCell = function () {
+  var cells = this.availableCells();
+  possible=[];
+  for (var i = 0; i < cells.length; i++) {
+    if (this.hasNeighbor(cells[i])) possible.push(cells[i]);
+  }
+  if (possible.length==0) return this.randomAvailableCell();
+  return possible[Math.floor(Math.random()*possible.length)];
+};
+
 Grid.prototype.availableCells = function () {
   var cells = [];
 
@@ -83,6 +94,20 @@ Grid.prototype.cellContent = function (cell) {
   } else {
     return null;
   }
+};
+
+//Checks if the specified cell has some occupied cells near
+Grid.prototype.hasNeighbor = function (cell){
+  neighborhood=[
+    {x:cell.x,y:cell.y+1},
+    {x:cell.x-1,y:cell.y},
+    {x:cell.x,y:cell.y-1},
+    {x:cell.x+1,y:cell.y}];
+
+  for (i=0;i<neighborhood.length;i++){
+    if (this.cellOccupied(neighborhood[i])) return true;
+  }
+  return false;
 };
 
 // Inserts a tile at its position

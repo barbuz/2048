@@ -44,14 +44,14 @@ GameManager.prototype.setup = function () {
     this.grid        = new Grid(previousState.grid.size,
                                 previousState.grid.cells); // Reload grid
     this.score       = previousState.score;
-    this.maxPow    = previousState.maxPow;
+    this.maxPow      = previousState.maxPow;
     this.over        = previousState.over;
     this.won         = previousState.won;
     this.keepPlaying = previousState.keepPlaying;
   } else {
     this.grid        = new Grid(this.size);
     this.score       = 0;
-    this.maxPow    = 2;
+    this.maxPow      = 2;
     this.over        = false;
     this.won         = false;
     this.keepPlaying = false;
@@ -71,10 +71,10 @@ GameManager.prototype.addStartTiles = function () {
   }
 };
 
-// Adds a tile in a random position -> Fills the grid with tiles
+// Adds a tile in a random position
 GameManager.prototype.addRandomTile = function () {
   if (this.grid.cellsAvailable()) {
-    var cell = this.grid.randomAvailableCell();
+    var cell = this.grid.magneticAvailableCell();
     var value = this.getNeighborValue(cell);
     if (value > Math.pow(2,this.maxPow/2)) value = Math.pow(2,Math.floor(this.maxPow/2));
     if (value < 2) value = 2;
@@ -97,7 +97,7 @@ GameManager.prototype.getNeighborValue = function (cell) {
           if (other) values.push(other.value);
   }
   return values[Math.floor(Math.random()*values.length)];
-}
+};
 
 // Sends the updated grid to the actuator
 GameManager.prototype.actuate = function () {
