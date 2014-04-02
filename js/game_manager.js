@@ -4,8 +4,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.storageManager = new StorageManager;
   this.actuator       = new Actuator;
 
-  //this.startTiles     = 2;
-  this.startTiles     = 1;
+  this.startTiles     = 2;
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
@@ -45,12 +44,14 @@ GameManager.prototype.setup = function () {
     this.grid        = new Grid(previousState.grid.size,
                                 previousState.grid.cells); // Reload grid
     this.score       = previousState.score;
+    this.maxPow    = previousState.maxPow;
     this.over        = previousState.over;
     this.won         = previousState.won;
     this.keepPlaying = previousState.keepPlaying;
   } else {
     this.grid        = new Grid(this.size);
     this.score       = 0;
+    this.maxPow    = 2;
     this.over        = false;
     this.won         = false;
     this.keepPlaying = false;
@@ -72,14 +73,31 @@ GameManager.prototype.addStartTiles = function () {
 
 // Adds a tile in a random position -> Fills the grid with tiles
 GameManager.prototype.addRandomTile = function () {
-  while (this.grid.cellsAvailable()) {
-    //var value = Math.random() < 0.9 ? 2 : 4;
-    var value = 2;
-    var tile = new Tile(this.grid.randomAvailableCell(), value);
+  if (this.grid.cellsAvailable()) {
+    var cell = this.grid.randomAvailableCell();
+    var value = this.getNeighborValue(cell);
+    if (value > Math.pow(2,this.maxPow/2)) value = Math.pow(2,Math.floor(this.maxPow/2));
+    if (value < 2) value = 2;
+    var tile = new Tile(cell, value);
 
     this.grid.insertTile(tile);
   }
 };
+
+// Selects a random value from neighbors of given cell
+GameManager.prototype.getNeighborValue = function (cell) {
+  var x = cell.x;
+  var y = cell.y;
+  var values = [2];
+  for (var direction = 0; direction < 4; direction++) {
+          var vector = this.getVector(direction);
+          var cell   = { x: x + vector.x, y: y + vector.y };
+
+          var other  = this.grid.cellContent(cell);
+          if (other) values.push(other.value);
+  }
+  return values[Math.floor(Math.random()*values.length)];
+}
 
 // Sends the updated grid to the actuator
 GameManager.prototype.actuate = function () {
@@ -96,6 +114,7 @@ GameManager.prototype.actuate = function () {
 
   this.actuator.actuate(this.grid, {
     score:      this.score,
+    maxPow:     this.maxPow,
     over:       this.over,
     won:        this.won,
     bestScore:  this.storageManager.getBestScore(),
@@ -109,6 +128,7 @@ GameManager.prototype.serialize = function () {
   return {
     grid:        this.grid.serialize(),
     score:       this.score,
+    maxPow:      this.maxPow,
     over:        this.over,
     won:         this.won,
     keepPlaying: this.keepPlaying
@@ -171,6 +191,9 @@ GameManager.prototype.move = function (direction) {
 
           // Update the score
           self.score += merged.value;
+
+          // Update the max power
+          if (Math.pow(2,self.maxPow)<merged.value) self.maxPow=self.maxPow+1;
 
           // The mighty 2048 tile
           if (merged.value === 2048) self.won = true;
